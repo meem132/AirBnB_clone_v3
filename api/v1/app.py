@@ -1,38 +1,41 @@
 #!/usr/bin/python3
-"""app"""
-from flask import Flask, make_response, jsonify
-from models import storage
+"""Flask web server to handle API requests.
+
+This module sets up a Flask web server that handles API requests.
+It registers the necessary routes and configurations
+to respond to HTTP requests.
+The server listens on the specified host and port,
+which can be customized through environment variables.
+"""
+
 from api.v1.views import app_views
-from os import getenv
+from flask import Blueprint, Flask, jsonify
 from flask_cors import CORS
+from models import storage
+from os import getenv
 
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/api/*": {"origins": "0.0.0.0"}})
-
-
-app.url_map.strict_slashes = False
 app.register_blueprint(app_views)
+app.url_map.strict_slashes = False
+
+CORS(app, origins="0.0.0.0")
+
+api_host = getenv("HBNB_API_HOST", "0.0.0.0")
+api_port = getenv("HBNB_API_PORT", 5000)
 
 
 @app.teardown_appcontext
-def tear(self):
-    ''' closes storage engine '''
+def teardown(self):
+    """Closes the database storage connection."""
     storage.close()
 
 
 @app.errorhandler(404)
 def not_found(error):
-    ''' handles 404 error and gives json formatted response '''
-    return make_response(jsonify({'error': 'Not found'}), 404)
+    """Handles 404 errors and returns a JSON-formatted 404 response."""
+    return jsonify({"error": "Not found"}), 404
 
-if __name__ == '__main__':
-    if getenv("HBNB_API_HOST") is None:
-        HBNB_API_HOST = '0.0.0.0'
-    else:
-        HBNB_API_HOST = getenv("HBNB_API_HOST")
-    if getenv("HBNB_API_PORT") is None:
-        HBNB_API_PORT = 5000
-    else:
-        HBNB_API_PORT = int(getenv("HBNB_API_PORT"))
-    app.run(host=HBNB_API_HOST, port=HBNB_API_PORT, threaded=True)
+
+if __name__ == "__main__":
+    app.run(host=api_host, port=int(api_port), threaded=True)

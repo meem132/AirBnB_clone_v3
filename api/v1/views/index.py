@@ -1,30 +1,37 @@
 #!/usr/bin/python3
-"""index"""
+"""Routes Handling for the App.
+
+This module contains route handlers for the Flask app.
+It defines the various routes and their corresponding functions
+to handle incoming HTTP requests.
+Each route is responsible for a specific endpoint or functionality of the app.
+
+Routes:
+- GET /status: Returns the status of the API.
+- GET /stats: Retrieves the number of each object by type.
+"""
+
 from api.v1.views import app_views
-from flask import jsonify
+from flask import Response, jsonify
 from models import storage
-from models.user import User
-from models.place import Place
-from models.state import State
-from models.city import City
-from models.amenity import Amenity
-from models.review import Review
-
-classes = {"users": "User", "places": "Place", "states": "State",
-           "cities": "City", "amenities": "Amenity",
-           "reviews": "Review"}
+from models.engine.db_storage import classes
 
 
-@app_views.route('/status', methods=['GET'])
-def status():
-    ''' routes to status page '''
-    return jsonify({'status': 'OK'})
+@app_views.route("/status")
+def check_status():
+    """Returns the status of the API."""
+    return jsonify({"status": "OK"})
 
 
-@app_views.route('/stats', methods=['GET'])
-def count():
-    '''retrieves the number of each objects by type'''
-    count_dict = {}
-    for cls in classes:
-        count_dict[cls] = storage.count(classes[cls])
-    return jsonify(count_dict)
+@app_views.route("/stats")
+def num_objs():
+    """Retrieves the number of each objects by type."""
+    objects = {
+        "amenities": storage.count(classes["Amenity"]),
+        "cities": storage.count(classes["City"]),
+        "places": storage.count(classes["Place"]),
+        "reviews": storage.count(classes["Review"]),
+        "states": storage.count(classes["State"]),
+        "users": storage.count(classes["User"]),
+    }
+    return jsonify(objects)
